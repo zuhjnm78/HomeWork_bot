@@ -8,6 +8,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface NotificationTaskRepository extends JpaRepository<NotificationTask, Long> {
-    @Query("SELECT t FROM notification_task t WHERE t.scheduledTime = :scheduledTime")
-    List<NotificationTask> findByScheduledTime(@Param("scheduledTime") LocalDateTime scheduledTime);
-}
+    @Query("SELECT t FROM notification_task t WHERE t.scheduledTime BETWEEN :startTime AND :endTime")
+    List<NotificationTask> findByScheduledTime(@Param("startTime") LocalDateTime startTime,
+                                               @Param("endTime") LocalDateTime endTime);}

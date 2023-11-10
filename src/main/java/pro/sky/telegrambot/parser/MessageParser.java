@@ -21,14 +21,11 @@ public class MessageParser {
             LocalDateTime dateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
 
             NotificationTask notificationTask = new NotificationTask();
-            notificationTask.setChatId("yourChatId");
-            notificationTask.setNotificationText("Your notification text");
-            notificationTask.setScheduledTime(LocalDateTime.now());
-            notificationTask.setAdditionalData("Additional data");
+            notificationTask.setScheduledTime(dateTime);
+            notificationTask.setNotificationText(text);
 
             return notificationTask;
         } else {
-            // В случае, если строка не соответствует формату
             throw new IllegalArgumentException("Invalid message format");
         }
     }

@@ -4,12 +4,13 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity(name = "notification_task")
+@SequenceGenerator(name = "notification_task_id_seq", sequenceName = "notification_task_id_seq", allocationSize = 1)
 public class NotificationTask {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "notification_task_id_seq")
     private Long id;
     @Column(name = "chat_id", nullable = false)
-    private String chatId;
+    private Long chatId;
 
     @Column(name = "notification_text", nullable = false)
     private String notificationText;
@@ -28,11 +29,11 @@ public class NotificationTask {
         this.id = id;
     }
 
-    public String getChatId() {
+    public Long getChatId() {
         return chatId;
     }
 
-    public void setChatId(String chatId) {
+    public void setChatId(Long chatId) {
         this.chatId = chatId;
     }
 
@@ -55,7 +56,6 @@ public class NotificationTask {
     public String getAdditionalData() {
         return additionalData;
     }
-
     public void setAdditionalData(String additionalData) {
         this.additionalData = additionalData;
     }

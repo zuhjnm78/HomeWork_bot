@@ -14,6 +14,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
 import pro.sky.telegrambot.model.NotificationTask;
 import pro.sky.telegrambot.model.NotificationTaskRepository;
+import pro.sky.telegrambot.parser.MessageParser;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
@@ -55,14 +56,27 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
             return;
         }
         String text = message.text();
-        long chatId = message.chat().id();
+        Long chatId = Long.valueOf(String.valueOf(message.chat().id()));
 
-        if ("/start".equals(text)) {
+        if (text.matches("\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2} .+")) {
+            NotificationTask notificationTask = MessageParser.parseMessage(text);
+            notificationTask.setChatId(chatId);
+
+            notificationTaskRepository.save(notificationTask);
+
+            sendNotification(chatId, "Уведомление установлено!");
+        } else if ("/start".equals(text)) {
             sendWelcomeMessage(chatId);
+        } else {
+            sendNotification(chatId, "Извините, я не могу обработать это сообщение. Пожалуйста, используйте формат `01.01.2022 20:00 Сделать домашнюю работу`.");
         }
     }
-    private void sendWelcomeMessage(long chatId) {
-        SendMessage welcomeMessage = new SendMessage(chatId, "Добро пожаловать! Это ваше приветственное сообщение.");
+    private void sendWelcomeMessage(Long chatId) {
+        String welcomeText = "Добро пожаловать! Этот бот предназначен для управления вашими уведомлениями.\n" +
+                "Чтобы установить уведомление, отправьте сообщение в формате:\n" +
+                "`01.01.2022 20:00 Сделать домашнюю работу`";
+        SendMessage welcomeMessage = new SendMessage(chatId, escapeMarkdown(welcomeText));
+
 
         try {
             SendResponse sendResponse = telegramBot.execute(welcomeMessage);
@@ -74,7 +88,7 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
             log.error("Exception while sending welcome message", e);
         }
     }
-    private void sendNotification(String chatId, String notificationText) {
+    private void sendNotification(Long chatId, String notificationText) {
         SendMessage notificationMessage = new SendMessage(chatId, notificationText);
 
         try {
@@ -90,15 +104,19 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
     @Scheduled(cron = "0 0/1 * * * *")
     public void processScheduledTasks() {
         LocalDateTime currentDateTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
-        List<NotificationTask> tasksToProcess = notificationTaskRepository.findByScheduledTime(currentDateTime);
+        List<NotificationTask> tasksToProcess = notificationTaskRepository
+                .findByScheduledTime(currentDateTime, currentDateTime.plusMinutes(1));
 
         for (NotificationTask task : tasksToProcess) {
-            String chatId = task.getChatId();
+            Long chatId = task.getChatId();
             String notificationText = task.getNotificationText();
             sendNotification(chatId, notificationText);
 
             notificationTaskRepository.delete(task);
         }
+    }
+    private String escapeMarkdown(String text) {
+        return text.replaceAll("!", "\\\\!");
     }
 
 }
